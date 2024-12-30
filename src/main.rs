@@ -33,14 +33,21 @@ fn reduce_prices(products: Vec<Product>) -> Option<Product> {
 }
 
 fn calculate_total_from_products(products: &Vec<Product>) -> f32 {
-    products.iter().fold(0.0, |acc, x| {
-        acc + x.price.unwrap_or(0.0)
-    })
+    products
+        .iter()
+        .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))
 }
 
-fn calculate_taxes_from_products(products: &Vec<Product>) -> Product {
+fn calculate_taxes_from_products(products: &Vec<Product>, tips: &Option<Product>) -> Product {
     let mut base = products[0].clone();
     let total = calculate_total_from_products(products);
+    let total = match tips {
+        Some(tips) => match tips.price {
+            Some(price) => total - price,
+            None => total,
+        },
+        None => total,
+    };
     let calc_taxes = total * 0.16;
     base.price = Some(calc_taxes);
     base
@@ -99,28 +106,21 @@ fn main() {
 
     let taxes = reduce_prices(taxes);
     let tips = reduce_prices(tips);
-    
-    let taxes = match taxes { 
-        Some(taxes) => { 
-            match taxes.price { 
-                Some(price) => { 
-                    Product {
-                        date: taxes.date,
-                        product: taxes.product,
-                        product_type: taxes.product_type,
-                        place: taxes.place,
-                        price: Some(price),
-                    }
-                },
-                None => { 
-                    calculate_taxes_from_products(&products)
-                },
-            }
+
+    let taxes = match taxes {
+        Some(taxes) => match taxes.price {
+            Some(price) => Product {
+                date: taxes.date,
+                product: taxes.product,
+                product_type: taxes.product_type,
+                place: taxes.place,
+                price: Some(price),
+            },
+            None => calculate_taxes_from_products(&products, &tips),
         },
-        None => calculate_taxes_from_products(&products),
+        None => calculate_taxes_from_products(&products, &tips),
     };
-    
-    
+
     println!("{:?}", products);
     println!("{:?}", tips);
     println!("{:?}", taxes);
