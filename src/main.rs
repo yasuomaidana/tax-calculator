@@ -53,6 +53,19 @@ fn calculate_taxes_from_products(products: &Vec<Product>, tips: &Option<Product>
     base
 }
 
+fn extract_by_type(products: &mut Vec<Product>, product_type: &str) -> Option<Product> {
+    let mut to_return = Vec::new();
+    products.retain(|product| {
+        if product.product_type == product_type {
+            to_return.push(product.clone());
+            false
+        } else {
+            true
+        }
+    });
+    reduce_prices(to_return)
+}
+
 fn main() {
     let args = Args::parse();
     let file = std::fs::read_to_string(args.file).unwrap();
@@ -83,29 +96,9 @@ fn main() {
             }
         })
         .collect();
-    let mut taxes: Vec<Product> = Vec::new();
-
-    products.retain(|product| {
-        if product.product_type == "Impuestos" {
-            taxes.push(product.clone());
-            false
-        } else {
-            true
-        }
-    });
-
-    let mut tips: Vec<Product> = Vec::new();
-    products.retain(|product| {
-        if product.product_type == "Propina" {
-            tips.push(product.clone());
-            false
-        } else {
-            true
-        }
-    });
-
-    let taxes = reduce_prices(taxes);
-    let tips = reduce_prices(tips);
+    
+    let taxes = extract_by_type(&mut products, "Impuestos");
+    let tips = extract_by_type(&mut products, "Propina");
 
     let taxes = match taxes {
         Some(taxes) => match taxes.price {
