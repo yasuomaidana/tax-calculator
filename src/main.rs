@@ -16,9 +16,9 @@ struct Product {
 }
 
 fn reduce_prices(products: Vec<Product>) -> Option<Product> {
-    if products.len() == 0 {
-        return None;
-    }
+    if products.is_empty() { 
+        return None
+    } 
     Some(products.iter().fold(products[0].clone(), |acc, x| {
         Product {
             date: acc.date.clone(),
