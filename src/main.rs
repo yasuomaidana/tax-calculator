@@ -100,9 +100,10 @@ fn main() {
             }
         })
         .collect();
-    
+
     let taxes = extract_by_type(&mut products, "Impuestos");
     let tips = extract_by_type(&mut products, "Propina");
+    let mut products = products.iter_mut().collect::<Vec<_>>();
 
     let taxes = match taxes {
         Some(taxes) => match taxes.price {
@@ -113,9 +114,9 @@ fn main() {
                 place: taxes.place,
                 price: Some(price),
             },
-            None => calculate_taxes_from_products(&products, &tips),
+            None => calculate_taxes_from_products(&mut products, &tips),
         },
-        None => calculate_taxes_from_products(&products, &tips),
+        None => calculate_taxes_from_products(&mut products, &tips),
     };
 
     println!("{:?}", products);
