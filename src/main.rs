@@ -38,9 +38,13 @@ fn calculate_total_from_products(products: &[Product]) -> f32 {
         .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))
 }
 
-fn calculate_taxes_from_products(products: &Vec<Product>, tips: &Option<Product>) -> Product {
+fn calculate_taxes_from_products(products: &mut [&mut Product], tips: &Option<Product>) -> Product {
     let mut base = products[0].clone();
-    let total = calculate_total_from_products(products);
+    let total = products.iter_mut().fold(0.0, |acc, x| {
+        let price = x.price.unwrap_or(0.0);
+        x.price = Some(price * 0.84);
+        acc + price
+    });
     let total = match tips {
         Some(tips) => match tips.price {
             Some(price) => total - price,
