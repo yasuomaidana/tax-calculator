@@ -32,7 +32,7 @@ fn reduce_prices(products: Vec<Product>) -> Option<Product> {
     }))
 }
 
-fn calculate_total_from_products(products: &Vec<Product>) -> f32 {
+fn calculate_total_from_products(products: &[Product]) -> f32 {
     products
         .iter()
         .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))
