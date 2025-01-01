@@ -88,6 +88,7 @@ fn main() {
         .split("\n")
         .into_iter()
         .map(|x| x.split("\t"))
+        .filter(|x| x.clone().count() >= 5)
         .map(|mut x| {
             let date = x.next().unwrap();
             let product = x.next().unwrap();
