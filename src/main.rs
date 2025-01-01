@@ -70,6 +70,17 @@ fn extract_by_type(products: &mut Vec<Product>, product_type: &str) -> Option<Pr
     reduce_prices(to_return)
 }
 
+fn calculate_invoice_total(products: &[Product], tips: &Option<Product>, taxes: &Product) -> f32 {
+    let total = calculate_total_from_products(products);
+    let total = match tips {
+        Some(tips) => match tips.price {
+            Some(price) => total + price,
+            None => total,
+        },
+        None => total,
+    };
+    total + taxes.price.unwrap_or(0.0)
+}
 fn main() {
     let args = Args::parse();
     let file = std::fs::read_to_string(args.file).unwrap();
@@ -122,4 +133,11 @@ fn main() {
     println!("{:?}", products);
     println!("{:?}", tips);
     println!("{:?}", taxes);
+    let inmutable_products = products
+        .iter_mut()
+        .map(|x| x.clone()).collect::<Vec<Product>>();
+    println!(
+        "Total: {:?}",
+        calculate_invoice_total(&inmutable_products, &tips, &taxes)
+    );
 }
