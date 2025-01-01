@@ -135,7 +135,8 @@ fn main() {
     println!("{:?}", taxes);
     let inmutable_products = products
         .iter_mut()
-        .map(|x| x.clone()).collect::<Vec<Product>>();
+        .map(|x| x.clone())
+        .collect::<Vec<Product>>();
     println!(
         "Total: {:?}",
         calculate_invoice_total(&inmutable_products, &tips, &taxes)
