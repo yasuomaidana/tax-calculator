@@ -1,9 +1,12 @@
 use clap::Parser;
+use std::fmt::Debug;
 
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(name = "file", help = "File to read")]
     file: String,
+    #[arg(short, long, help = "Show all products", default_value = "false")]
+    show_all: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -15,21 +18,30 @@ struct Product {
     price: Option<f32>,
 }
 
+impl Product {
+    fn show(&self) {
+        println!("{:0.2}", self.price.unwrap_or(0.0));
+    }
+    fn show_all(&self) {
+        println!(
+            "{} {:?} {} {:?} {:0.2}",
+            self.date,
+            self.product,
+            self.product_type,
+            self.place,
+            self.price.unwrap_or(0.0)
+        );
+    }
+}
+
 fn reduce_prices(products: Vec<Product>) -> Option<Product> {
     if products.is_empty() {
         return None;
     }
-    Some(products.iter().fold(products[0].clone(), |acc, x| {
-        Product {
-            date: acc.date.clone(),
-            product: acc.product.clone(),
-            product_type: acc.product_type.clone(),
-            place: acc.place.clone(),
-            price: acc
-                .price
-                .and_then(|acc_price| x.price.and_then(|x_price| Some(acc_price + x_price))),
-        }
-    }))
+    let total = calculate_total_from_products(&products);
+    let mut base = products[0].clone();
+    base.price = Some(total);
+    Some(base)
 }
 
 fn calculate_total_from_products(products: &[Product]) -> f32 {
@@ -38,13 +50,59 @@ fn calculate_total_from_products(products: &[Product]) -> f32 {
         .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))
 }
 
-fn calculate_taxes_from_products(products: &mut [&mut Product], tips: &Option<Product>) -> Product {
-    let mut base = products[0].clone();
-    let total = products.iter_mut().fold(0.0, |acc, x| {
+fn calculate_prices_from_taxes(products: &mut [&mut Product], taxes: &Product) {
+    let original_products = products
+        .iter_mut()
+        .map(|x| x.clone())
+        .collect::<Vec<Product>>();
+
+    let total = calculate_products_total_mut(products);
+    let taxes = taxes.price.unwrap_or(0.0);
+    let ratio = taxes / total;
+    let first_taxes = products.iter_mut().fold(0.0, |acc, x| {
+        let price = x.price.unwrap_or(0.0);
+        let price = price * (1.0 - ratio);
+        x.price = Some(price);
+        acc + price
+    });
+    let remaining_taxes = total - first_taxes - taxes;
+    let total_products = products.len() as f32;
+
+    let to_fix = original_products
+        .iter()
+        .zip(products.iter_mut())
+        .enumerate()
+        .filter_map(|(i, (original, product))| {
+            let original_price = original.price.unwrap_or(0.0);
+            let price = product.price.unwrap_or(0.0) + remaining_taxes / total_products;
+            if price > original_price {
+                None
+            } else {
+                Some(i)
+            }
+        })
+        .collect::<Vec<usize>>();
+
+    let to_fix_quantity = to_fix.len() as f32;
+    let remaining_taxes = remaining_taxes / to_fix_quantity;
+    to_fix.iter().for_each(|i| {
+        let product = &mut products[*i];
+        let price = product.price.unwrap_or(0.0) + remaining_taxes;
+        product.price = Some(price);
+    });
+}
+
+fn calculate_products_total_mut(products: &mut [&mut Product]) -> f32 {
+    products.iter_mut().fold(0.0, |acc, x| {
         let price = x.price.unwrap_or(0.0);
         x.price = Some(price * 0.84);
         acc + price
-    });
+    })
+}
+
+fn calculate_taxes_from_products(products: &mut [&mut Product], tips: &Option<Product>) -> Product {
+    let mut base = products[0].clone();
+    let total = calculate_products_total_mut(products);
     let total = match tips {
         Some(tips) => match tips.price {
             Some(price) => total - price,
@@ -53,6 +111,8 @@ fn calculate_taxes_from_products(products: &mut [&mut Product], tips: &Option<Pr
         None => total,
     };
     let calc_taxes = total * 0.16;
+    base.product_type = "Impuestos".to_owned();
+    base.product = "Impuestos".to_owned();
     base.price = Some(calc_taxes);
     base
 }
@@ -80,6 +140,33 @@ fn calculate_invoice_total(products: &[Product], tips: &Option<Product>, taxes: 
         None => total,
     };
     total + taxes.price.unwrap_or(0.0)
+}
+
+fn show_final_invoice(
+    products: &[Product],
+    tips: &Option<Product>,
+    taxes: &Product,
+    show_all: bool,
+) {
+    if show_all {
+        products.iter().for_each(|product| {
+            product.show_all();
+        });
+        match tips {
+            Some(tips) => tips.show_all(),
+            None => {}
+        }
+        taxes.show_all();
+    } else {
+        products.iter().for_each(|product| {
+            product.show();
+        });
+        match tips {
+            Some(tips) => tips.show(),
+            None => {}
+        }
+        taxes.show();
+    }
 }
 fn main() {
     let args = Args::parse();
@@ -119,25 +206,20 @@ fn main() {
 
     let taxes = match taxes {
         Some(taxes) => match taxes.price {
-            Some(price) => Product {
-                date: taxes.date,
-                product: taxes.product,
-                product_type: taxes.product_type,
-                place: taxes.place,
-                price: Some(price),
-            },
+            Some(_price) => {
+                calculate_prices_from_taxes(&mut products, &taxes);
+                taxes
+            }
             None => calculate_taxes_from_products(&mut products, &tips),
         },
         None => calculate_taxes_from_products(&mut products, &tips),
     };
 
-    println!("{:?}", products);
-    println!("{:?}", tips);
-    println!("{:?}", taxes);
     let inmutable_products = products
         .iter_mut()
         .map(|x| x.clone())
         .collect::<Vec<Product>>();
+    show_final_invoice(&inmutable_products, &tips, &taxes, args.show_all);
     println!(
         "Total: {:?}",
         calculate_invoice_total(&inmutable_products, &tips, &taxes)
