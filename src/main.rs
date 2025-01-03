@@ -1,5 +1,9 @@
+mod reader;
+mod product;
+
 use clap::Parser;
 use std::fmt::Debug;
+use crate::product::Product;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -9,30 +13,7 @@ struct Args {
     show_all: bool,
 }
 
-#[derive(Debug, Clone)]
-struct Product {
-    date: String,
-    product: String,
-    product_type: String,
-    place: String,
-    price: Option<f32>,
-}
 
-impl Product {
-    fn show(&self) {
-        println!("{:0.2}", self.price.unwrap_or(0.0));
-    }
-    fn show_all(&self) {
-        println!(
-            "{} {:?} {} {:?} {:0.2}",
-            self.date,
-            self.product,
-            self.product_type,
-            self.place,
-            self.price.unwrap_or(0.0)
-        );
-    }
-}
 
 fn reduce_prices(products: Vec<Product>) -> Option<Product> {
     if products.is_empty() {
@@ -171,34 +152,7 @@ fn show_final_invoice(
 fn main() {
     let args = Args::parse();
     let file = std::fs::read_to_string(args.file).unwrap();
-    let mut products: Vec<Product> = file
-        .split("\n")
-        .into_iter()
-        .map(|x| x.split("\t"))
-        .filter(|x| x.clone().count() >= 5)
-        .map(|mut x| {
-            let date = x.next().unwrap();
-            let product = x.next().unwrap();
-            let product_type = x.next().unwrap();
-            let place = x.next().unwrap();
-            let price = x
-                .next()
-                .unwrap()
-                .replace("$", "")
-                .trim()
-                .to_owned()
-                .parse::<f32>()
-                .ok();
-
-            Product {
-                date: date.to_owned(),
-                product: product.to_owned(),
-                product_type: product_type.to_owned(),
-                place: place.to_owned(),
-                price,
-            }
-        })
-        .collect();
+    let mut products: Vec<Product> = reader::read_file(&file);
 
     let taxes = extract_by_type(&mut products, "Impuestos");
     let tips = extract_by_type(&mut products, "Propina");
