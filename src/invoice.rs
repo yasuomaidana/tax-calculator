@@ -59,12 +59,12 @@ impl<'a> Invoice<'a> {
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use crate::invoice::Invoice;
     use crate::product::Product;
 
     #[test]
-    fn test_new_invoice(){
+    fn test_new_invoice() {
         let mut products = vec![
             Product {
                 date: "2021-01-01".to_owned(),
@@ -107,5 +107,44 @@ mod tests{
         assert_eq!(invoice.products.len(), 3);
         assert_eq!(invoice.tips.unwrap().price.unwrap(), 2.0);
         assert_eq!(invoice.taxes.unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_calculate_taxes_from_products() {
+        let mut products = vec![
+            Product {
+                date: "2021-01-01".to_owned(),
+                product: "Cerveza".to_owned(),
+                product_type: "Bebida".to_owned(),
+                place: "Bar".to_owned(),
+                price: Some(2.0),
+            },
+            Product {
+                date: "2021-01-01".to_owned(),
+                product: "Cerveza".to_owned(),
+                product_type: "Bebida".to_owned(),
+                place: "Bar".to_owned(),
+                price: Some(2.0),
+            },
+            Product {
+                date: "2021-01-01".to_owned(),
+                product: "Cerveza".to_owned(),
+                product_type: "Bebida".to_owned(),
+                place: "Bar".to_owned(),
+                price: Some(2.0),
+            },
+            Product {
+                date: "2021-01-01".to_owned(),
+                product: "Propina".to_owned(),
+                product_type: "Propina".to_owned(),
+                place: "Bar".to_owned(),
+                price: Some(2.0),
+            },
+        ];
+        let products = products.iter_mut().collect::<Vec<_>>();
+        let mut invoice = Invoice::new(products);
+        invoice.calculate_taxes();
+        let total = invoice.calculate_total();
+        assert_eq!(total, 8.0);
     }
 }
