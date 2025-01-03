@@ -21,19 +21,6 @@ impl<'a> Invoice<'a> {
         }
     }
 
-    // fn calculate_taxes_from_products(&mut self) {
-    //     let mut base = self.products[0].clone();
-    //     let tips = self
-    //         .tips
-    //         .as_ref()
-    //         .map(|x| x.price.unwrap_or(0.0))
-    //         .unwrap_or(0.0);
-    // 
-    //     let mut products = self.products.iter_mut().collect::<Vec<_>>();
-    //     let total = calculate_products_total_mut(&mut products);
-    //     let total = total - tips;
-    //     base.price = Some(total * 0.16);
-    // }
     fn calculate_taxes(&mut self) {
         match self.taxes {
             None => self.calculate_taxes_from_products(),
@@ -43,18 +30,32 @@ impl<'a> Invoice<'a> {
 
     fn calculate_taxes_from_products(&mut self) {
         let mut base = self.products[0].clone();
-        let total = calculate_products_taxes(&mut self.products);
+        let total = self.calculate_products_taxes();
         base.price = Some(total * 0.16);
         self.taxes = Some(vec![base]);
     }
-}
 
-pub fn calculate_products_total_mut(products: &mut [&mut Product]) -> f32 {
-    products.iter_mut().fold(0.0, |acc, x| {
-        let price = x.price.unwrap_or(0.0);
-        x.price = Some(price * 0.84);
-        acc + price
-    })
+    pub fn calculate_total(&self) -> f32 {
+        let total = calculate_total_from_products_mut(&self.products);
+        let tips = self
+            .tips
+            .as_ref()
+            .map(|x| x.price.unwrap_or(0.0))
+            .unwrap_or(0.0);
+        let taxes = self
+            .taxes
+            .as_ref()
+            .map_or(0.0, |x| calculate_total_from_products(&x));
+        total + tips + taxes
+    }
+    
+    fn calculate_products_taxes(&mut self) -> f32 {
+        self.products.iter_mut().fold(0.0, |acc, x| {
+            let price = x.price.unwrap_or(0.0);
+            x.price = Some(price * 0.84);
+            acc + price
+        })
+    }
 }
 
 #[cfg(test)]
