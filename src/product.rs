@@ -57,6 +57,18 @@ pub fn extract_by_type(products: &mut Vec<Product>, product_type: &str) -> Optio
     }
 }
 
+pub fn calculate_total_from_products_mut(products: &Vec<&mut Product>) -> f32 {
+    products
+        .iter()
+        .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))
+}
+
+pub fn calculate_total_from_products(products: &Vec<Product>) -> f32 {
+    products
+        .iter()
+        .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
