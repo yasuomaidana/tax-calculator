@@ -1,4 +1,6 @@
-use crate::product::{extract_by_type, extract_by_type_mut, Product};
+use crate::product::{
+    calculate_total_from_products, calculate_total_from_products_mut, extract_by_type_mut, Product,
+};
 
 #[derive(Debug)]
 pub struct Invoice<'a> {
@@ -32,6 +34,19 @@ impl<'a> Invoice<'a> {
     //     let total = total - tips;
     //     base.price = Some(total * 0.16);
     // }
+    fn calculate_taxes(&mut self) {
+        match self.taxes {
+            None => self.calculate_taxes_from_products(),
+            Some(_) => {}
+        }
+    }
+
+    fn calculate_taxes_from_products(&mut self) {
+        let mut base = self.products[0].clone();
+        let total = calculate_products_taxes(&mut self.products);
+        base.price = Some(total * 0.16);
+        self.taxes = Some(vec![base]);
+    }
 }
 
 pub fn calculate_products_total_mut(products: &mut [&mut Product]) -> f32 {
