@@ -23,6 +23,23 @@ impl Product {
     }
 }
 
+pub fn extract_by_name(products: &mut Vec<&mut Product>, product_type: &str) -> Option<Vec<Product>> {
+    let mut to_return = Vec::new();
+    products.retain(|product| {
+        if product.product == product_type {
+            to_return.push((*product).clone());
+            false
+        } else {
+            true
+        }
+    });
+    if to_return.is_empty() {
+        None
+    } else {
+        Some(to_return)
+    }
+}
+
 pub fn extract_by_type_mut(products: &mut Vec<&mut Product>, product_type: &str) -> Option<Vec<Product>> {
     let mut to_return = Vec::new();
     products.retain(|product| {

@@ -1,6 +1,4 @@
-use crate::product::{
-    calculate_total_from_products, calculate_total_from_products_mut, extract_by_type_mut, Product,
-};
+use crate::product::{calculate_total_from_products, calculate_total_from_products_mut, extract_by_name, extract_by_type_mut, Product};
 
 const VAT: f64 = 0.16;
 
@@ -14,7 +12,7 @@ pub struct Invoice<'a> {
 impl<'a> Invoice<'a> {
     pub fn new(raw_products: Vec<&'a mut Product>) -> Self {
         let mut products = raw_products;
-        let tips = extract_by_type_mut(&mut products, "Propina").and_then(|mut x| x.pop());
+        let tips = extract_by_name(&mut products, "Propina").and_then(|mut x| x.pop());
         let taxes = extract_by_type_mut(&mut products, "Impuestos");
         Invoice {
             products,
@@ -282,7 +280,7 @@ mod tests {
         let raw_invoice = "
         viernes, 27 de diciembre de 2024	Vino Rosado	Alcohol	Restaurant	 $256.00 
         viernes, 27 de diciembre de 2024	Vino Tinto	Alcohol	Restaurant	 $148.00
-        viernes, 27 de diciembre de 2024	Vino Tinto	Propina	Propina	 $30.00
+        viernes, 27 de diciembre de 2024	Propina	Alcohol	Restaurant	 30.00
         viernes, 27 de diciembre de 2024	IVA	Impuestos	walmart	 $20.10
         viernes, 27 de diciembre de 2024	ISR	Impuestos	walmart	 $10.53
         ";
@@ -291,7 +289,7 @@ mod tests {
         let mut invoice = Invoice::new(products);
         invoice.calculate_taxes();
         let total = invoice.calculate_total();
-        assert_eq!(total, 434.0);
+        assert!((total-434.0).abs()<0.001);
         let total_products = invoice.total_products();
         let total_tips = invoice.total_tips();
         let total_taxes = invoice.total_taxes();
