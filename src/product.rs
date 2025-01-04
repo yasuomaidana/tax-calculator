@@ -4,7 +4,7 @@ pub struct Product {
     pub(crate) product: String,
     pub(crate) product_type: String,
     pub(crate) place: String,
-    pub(crate) price: Option<f32>,
+    pub(crate) price: Option<f64>,
 }
 
 impl Product {
@@ -57,13 +57,13 @@ pub fn extract_by_type(products: &mut Vec<Product>, product_type: &str) -> Optio
     }
 }
 
-pub fn calculate_total_from_products_mut(products: &Vec<&mut Product>) -> f32 {
+pub fn calculate_total_from_products_mut(products: &Vec<&mut Product>) -> f64 {
     products
         .iter()
         .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))
 }
 
-pub fn calculate_total_from_products(products: &Vec<Product>) -> f32 {
+pub fn calculate_total_from_products(products: &Vec<Product>) -> f64 {
     products
         .iter()
         .fold(0.0, |acc, x| acc + x.price.unwrap_or(0.0))

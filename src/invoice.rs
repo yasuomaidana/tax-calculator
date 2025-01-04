@@ -2,7 +2,7 @@ use crate::product::{
     calculate_total_from_products, calculate_total_from_products_mut, extract_by_type_mut, Product,
 };
 
-const VAT: f32 = 0.16;
+const VAT: f64 = 0.16;
 
 #[derive(Debug)]
 pub struct Invoice<'a> {
@@ -50,7 +50,7 @@ impl<'a> Invoice<'a> {
         });
 
         let remaining_taxes = total_before_vat - total_taxes - estimated_taxes;
-        let total_products = self.products.len() as f32;
+        let total_products = self.products.len() as f64;
         let estimated_taxes_distribution = remaining_taxes / total_products;
 
         let products_to_fix = original_products
@@ -68,7 +68,7 @@ impl<'a> Invoice<'a> {
             })
             .collect::<Vec<usize>>();
 
-        let products_to_fix_quantity = products_to_fix.len() as f32;
+        let products_to_fix_quantity = products_to_fix.len() as f64;
         let remaining_taxes = remaining_taxes / products_to_fix_quantity;
 
         products_to_fix.iter().for_each(|i| {
@@ -78,17 +78,17 @@ impl<'a> Invoice<'a> {
         });
     }
 
-    fn total_tips(&self) -> f32 {
+    fn total_tips(&self) -> f64 {
         self.tips.as_ref().map_or(0.0, |x| x.price.unwrap_or(0.0))
     }
 
-    fn total_taxes(&self) -> f32 {
+    fn total_taxes(&self) -> f64 {
         self.taxes
             .as_ref()
             .map_or(0.0, |x| calculate_total_from_products(&x))
     }
 
-    fn total_products(&self) -> f32 {
+    fn total_products(&self) -> f64 {
         calculate_total_from_products_mut(&self.products)
     }
 
@@ -99,14 +99,14 @@ impl<'a> Invoice<'a> {
         self.taxes = Some(vec![base]);
     }
 
-    pub fn calculate_total(&self) -> f32 {
+    pub fn calculate_total(&self) -> f64 {
         let total = self.total_products();
         let tips = self.total_tips();
         let taxes = self.total_taxes();
         total + tips + taxes
     }
 
-    fn remove_vat_from_products(&mut self) -> f32 {
+    fn remove_vat_from_products(&mut self) -> f64 {
         self.products.iter_mut().fold(0.0, |acc, x| {
             let price = x.price.unwrap_or(0.0);
             x.price = Some(price * (1.0 - VAT));
