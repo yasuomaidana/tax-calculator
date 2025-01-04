@@ -112,7 +112,7 @@ mod tests {
     }
 
     #[test]
-    fn test_calculate_taxes_from_products() {
+    fn test_calculate_taxes_from_restaurant() {
         let mut products = vec![
             Product {
                 date: "2021-01-01".to_owned(),
@@ -147,6 +147,12 @@ mod tests {
         let mut invoice = Invoice::new(products);
         invoice.calculate_taxes();
         let total = invoice.calculate_total();
+        let total_products = invoice.total_products();
+        let total_tips = invoice.total_tips();
+        let total_taxes = invoice.total_taxes();
         assert_eq!(total, 8.0);
+        assert_eq!(total_products, 6.0*(1.0-VAT));
+        assert_eq!(total_tips, 2.0);
+        assert_eq!(total_taxes, 6.0*VAT);
     }
 }
