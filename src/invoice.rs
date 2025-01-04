@@ -30,6 +30,20 @@ impl<'a> Invoice<'a> {
         }
     }
 
+    fn total_tips(&self) -> f32 {
+        self.tips.as_ref().map_or(0.0, |x| x.price.unwrap_or(0.0))
+    }
+
+    fn total_taxes(&self) -> f32 {
+        self.taxes
+            .as_ref()
+            .map_or(0.0, |x| calculate_total_from_products(&x))
+    }
+
+    fn total_products(&self) -> f32 {
+        calculate_total_from_products_mut(&self.products)
+    }
+
     fn calculate_taxes_from_products(&mut self) {
         let mut base = self.products[0].clone();
         let total = self.remove_vat_from_products();
@@ -38,20 +52,13 @@ impl<'a> Invoice<'a> {
     }
 
     pub fn calculate_total(&self) -> f32 {
-        let total = calculate_total_from_products_mut(&self.products);
-        let tips = self
-            .tips
-            .as_ref()
-            .map(|x| x.price.unwrap_or(0.0))
-            .unwrap_or(0.0);
-        let taxes = self
-            .taxes
-            .as_ref()
-            .map_or(0.0, |x| calculate_total_from_products(&x));
+        let total = self.total_products();
+        let tips = self.total_tips();
+        let taxes = self.total_taxes();
         total + tips + taxes
     }
-    
-    fn calculate_products_taxes(&mut self) -> f32 {
+
+    fn remove_vat_from_products(&mut self) -> f32 {
         self.products.iter_mut().fold(0.0, |acc, x| {
             let price = x.price.unwrap_or(0.0);
             x.price = Some(price * (1.0 - VAT));
