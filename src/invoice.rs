@@ -26,8 +26,56 @@ impl<'a> Invoice<'a> {
     fn calculate_taxes(&mut self) {
         match self.taxes {
             None => self.calculate_taxes_from_products(),
-            Some(_) => {}
+            Some(_) => self.fix_prices_from_taxes(),
         }
+    }
+
+    fn fix_prices_from_taxes(&mut self) {
+        let original_products = self
+            .products
+            .iter_mut()
+            .map(|x| x.clone())
+            .collect::<Vec<_>>();
+
+        let total_before_vat = self.total_products();
+        let total_taxes = self.total_taxes();
+
+        let estimated_ratio = total_taxes / total_before_vat;
+
+        let estimated_taxes = self.products.iter_mut().fold(0.0, |acc, x| {
+            let price = x.price.unwrap_or(0.0);
+            let price = price * (1.0 - estimated_ratio);
+            x.price = Some(price);
+            acc + price
+        });
+
+        let remaining_taxes = total_before_vat - total_taxes - estimated_taxes;
+        let total_products = self.products.len() as f32;
+        let estimated_taxes_distribution = remaining_taxes / total_products;
+
+        let products_to_fix = original_products
+            .iter()
+            .zip(self.products.iter_mut())
+            .enumerate()
+            .filter_map(|(i, (original, product))| {
+                let original_price = original.price.unwrap_or(0.0);
+                let price = product.price.unwrap_or(0.0) + estimated_taxes_distribution;
+                if price > original_price {
+                    None
+                } else {
+                    Some(i)
+                }
+            })
+            .collect::<Vec<usize>>();
+
+        let products_to_fix_quantity = products_to_fix.len() as f32;
+        let remaining_taxes = remaining_taxes / products_to_fix_quantity;
+
+        products_to_fix.iter().for_each(|i| {
+            let product = &mut self.products[*i];
+            let price = product.price.unwrap_or(0.0) + remaining_taxes;
+            product.price = Some(price);
+        });
     }
 
     fn total_tips(&self) -> f32 {
