@@ -260,4 +260,27 @@ mod tests {
         assert_eq!(total_tips, 0.0);
         assert_eq!(total_taxes, 404.0*VAT);
     }
+
+    #[test]
+    fn test_taxes_calculation_from_restaurant_with_taxes() {
+        let raw_invoice = "
+        viernes, 27 de diciembre de 2024	Vino Rosado	Alcohol	Restaurant	 $256.00 
+        viernes, 27 de diciembre de 2024	Vino Tinto	Alcohol	Restaurant	 $148.00
+        viernes, 27 de diciembre de 2024	Vino Tinto	Propina	Propina	 $30.00
+        viernes, 27 de diciembre de 2024	IVA	Impuestos	walmart	 $20.10
+        viernes, 27 de diciembre de 2024	ISR	Impuestos	walmart	 $10.53
+        ";
+        let mut products = read_file(raw_invoice);
+        let products = products.iter_mut().collect::<Vec<_>>();
+        let mut invoice = Invoice::new(products);
+        invoice.calculate_taxes();
+        let total = invoice.calculate_total();
+        assert_eq!(total, 434.0);
+        let total_products = invoice.total_products();
+        let total_tips = invoice.total_tips();
+        let total_taxes = invoice.total_taxes();
+        assert_eq!(total_products, 373.37);
+        assert_eq!(total_tips, 30.0);
+        assert!((total_taxes -30.63).abs()< 0.001);
+    }
 }
