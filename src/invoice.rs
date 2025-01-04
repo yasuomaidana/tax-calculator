@@ -2,6 +2,8 @@ use crate::product::{
     calculate_total_from_products, calculate_total_from_products_mut, extract_by_type_mut, Product,
 };
 
+const VAT: f32 = 0.16;
+
 #[derive(Debug)]
 pub struct Invoice<'a> {
     products: Vec<&'a mut Product>,
@@ -30,8 +32,8 @@ impl<'a> Invoice<'a> {
 
     fn calculate_taxes_from_products(&mut self) {
         let mut base = self.products[0].clone();
-        let total = self.calculate_products_taxes();
-        base.price = Some(total * 0.16);
+        let total = self.remove_vat_from_products();
+        base.price = Some(total * VAT);
         self.taxes = Some(vec![base]);
     }
 
@@ -52,7 +54,7 @@ impl<'a> Invoice<'a> {
     fn calculate_products_taxes(&mut self) -> f32 {
         self.products.iter_mut().fold(0.0, |acc, x| {
             let price = x.price.unwrap_or(0.0);
-            x.price = Some(price * 0.84);
+            x.price = Some(price * (1.0 - VAT));
             acc + price
         })
     }
