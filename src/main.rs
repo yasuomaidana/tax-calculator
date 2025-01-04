@@ -7,11 +7,12 @@ use crate::product::Product;
 use clap::Parser;
 use std::fmt::Debug;
 use std::fs;
+use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 struct Args {
     #[arg(name = "file", help = "File to read")]
-    file: String,
+    file: PathBuf,
     #[arg(short, long, help = "Show all products", default_value = "false")]
     show_all: bool,
 }
