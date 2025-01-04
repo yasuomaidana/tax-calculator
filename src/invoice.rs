@@ -117,8 +117,9 @@ impl<'a> Invoice<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::invoice::Invoice;
+    use crate::invoice::{Invoice, VAT};
     use crate::product::Product;
+    use crate::reader::read_file;
 
     #[test]
     fn test_new_invoice() {
@@ -209,5 +210,54 @@ mod tests {
         assert_eq!(total_products, 6.0*(1.0-VAT));
         assert_eq!(total_tips, 2.0);
         assert_eq!(total_taxes, 6.0*VAT);
+    }
+
+    #[test]
+    fn test_taxes_calculation_from_bill() {
+        let raw_invoice = "
+        viernes, 27 de diciembre de 2024	Vino Rosado	Alcohol	walmart	 $256.00 
+        viernes, 27 de diciembre de 2024	Vino Tinto	Alcohol	walmart	 $148.00 
+        viernes, 27 de diciembre de 2024	Sidra	Alcohol	walmart	 $88.45 
+        viernes, 27 de diciembre de 2024	Bicarbonato	Abarrotes	walmart	 $24.00 
+        viernes, 27 de diciembre de 2024	Pasta	Comida	walmart	 $22.50 
+        viernes, 27 de diciembre de 2024	Jeringa	Abarrotes	walmart	 $70.00 
+        viernes, 27 de diciembre de 2024	Jabón	Abarrotes	walmart	 $67.00 
+        viernes, 27 de diciembre de 2024	Rummy	Ocio	walmart	 $185.00 
+        viernes, 27 de diciembre de 2024	IVA	Impuestos	walmart	 $62.10
+        viernes, 27 de diciembre de 2024	ISR	Impuestos	walmart	 $95.53 
+        ";
+        let mut products = read_file(raw_invoice);
+        let products = products.iter_mut().collect::<Vec<_>>();
+        let mut invoice = Invoice::new(products);
+        invoice.calculate_taxes();
+        let total = invoice.calculate_total();
+        let total_products = invoice.total_products();
+        let total_tips = invoice.total_tips();
+        let total_taxes = invoice.total_taxes();
+        assert!((total-860.95).abs()< 0.001);
+        assert!((total_products-703.32).abs()< 0.001);
+        assert_eq!(total_tips, 0.0);
+        assert!((total_taxes-157.63).abs()< 0.001);
+    }
+
+    #[test]
+    fn test_taxes_calculation_from_bill_no_taxes() {
+        let raw_invoice = "
+        viernes, 27 de diciembre de 2024	Vino Rosado	Alcohol	walmart	 $256.00 
+        viernes, 27 de diciembre de 2024	Vino Tinto	Alcohol	walmart	 $148.00
+
+        ";
+        let mut products = read_file(raw_invoice);
+        let products = products.iter_mut().collect::<Vec<_>>();
+        let mut invoice = Invoice::new(products);
+        invoice.calculate_taxes();
+        let total = invoice.calculate_total();
+        assert_eq!(total, 404.0);
+        let total_products = invoice.total_products();
+        let total_tips = invoice.total_tips();
+        let total_taxes = invoice.total_taxes();
+        assert_eq!(total_products, 404.0*(1.0-VAT));
+        assert_eq!(total_tips, 0.0);
+        assert_eq!(total_taxes, 404.0*VAT);
     }
 }
