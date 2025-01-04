@@ -23,7 +23,7 @@ impl<'a> Invoice<'a> {
         }
     }
 
-    fn calculate_taxes(&mut self) {
+    pub fn calculate_taxes(&mut self) {
         match self.taxes {
             None => self.calculate_taxes_from_products(),
             Some(_) => self.fix_prices_from_taxes(),
@@ -78,17 +78,17 @@ impl<'a> Invoice<'a> {
         });
     }
 
-    fn total_tips(&self) -> f64 {
+    pub fn total_tips(&self) -> f64 {
         self.tips.as_ref().map_or(0.0, |x| x.price.unwrap_or(0.0))
     }
 
-    fn total_taxes(&self) -> f64 {
+    pub fn total_taxes(&self) -> f64 {
         self.taxes
             .as_ref()
             .map_or(0.0, |x| calculate_total_from_products(&x))
     }
 
-    fn total_products(&self) -> f64 {
+    pub fn total_products(&self) -> f64 {
         calculate_total_from_products_mut(&self.products)
     }
 
@@ -112,6 +112,22 @@ impl<'a> Invoice<'a> {
             x.price = Some(price * (1.0 - VAT));
             acc + price
         })
+    }
+
+    pub fn show_invoice(&self, show_all: bool) {
+        if show_all {
+            self.products.iter().for_each(|x| x.show_all());
+            self.tips.as_ref().map(|x| x.show_all());
+            self.taxes
+                .as_ref()
+                .map(|x| x.iter().for_each(|y| y.show_all()));
+        } else {
+            self.products.iter().for_each(|x| x.show());
+            self.tips.as_ref().map(|x| x.show());
+            self.taxes
+                .as_ref()
+                .map(|x| x.iter().for_each(|y| y.show_all()));
+        }
     }
 }
 
@@ -207,9 +223,9 @@ mod tests {
         let total_tips = invoice.total_tips();
         let total_taxes = invoice.total_taxes();
         assert_eq!(total, 8.0);
-        assert_eq!(total_products, 6.0*(1.0-VAT));
+        assert_eq!(total_products, 6.0 * (1.0 - VAT));
         assert_eq!(total_tips, 2.0);
-        assert_eq!(total_taxes, 6.0*VAT);
+        assert_eq!(total_taxes, 6.0 * VAT);
     }
 
     #[test]
@@ -234,10 +250,10 @@ mod tests {
         let total_products = invoice.total_products();
         let total_tips = invoice.total_tips();
         let total_taxes = invoice.total_taxes();
-        assert!((total-860.95).abs()< 0.001);
-        assert!((total_products-703.32).abs()< 0.001);
+        assert!((total - 860.95).abs() < 0.001);
+        assert!((total_products - 703.32).abs() < 0.001);
         assert_eq!(total_tips, 0.0);
-        assert!((total_taxes-157.63).abs()< 0.001);
+        assert!((total_taxes - 157.63).abs() < 0.001);
     }
 
     #[test]
@@ -256,9 +272,9 @@ mod tests {
         let total_products = invoice.total_products();
         let total_tips = invoice.total_tips();
         let total_taxes = invoice.total_taxes();
-        assert_eq!(total_products, 404.0*(1.0-VAT));
+        assert_eq!(total_products, 404.0 * (1.0 - VAT));
         assert_eq!(total_tips, 0.0);
-        assert_eq!(total_taxes, 404.0*VAT);
+        assert_eq!(total_taxes, 404.0 * VAT);
     }
 
     #[test]
@@ -281,6 +297,6 @@ mod tests {
         let total_taxes = invoice.total_taxes();
         assert_eq!(total_products, 373.37);
         assert_eq!(total_tips, 30.0);
-        assert!((total_taxes -30.63).abs()< 0.001);
+        assert!((total_taxes - 30.63).abs() < 0.001);
     }
 }
