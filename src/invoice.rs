@@ -1,4 +1,7 @@
-use crate::product::{calculate_total_from_products, calculate_total_from_products_mut, extract_by_name, extract_by_type_mut, Product};
+use crate::product::{
+    calculate_total_from_products, calculate_total_from_products_mut, extract_by_name,
+    extract_by_type_mut, Product,
+};
 
 const VAT: f64 = 0.16;
 
@@ -289,7 +292,7 @@ mod tests {
         let mut invoice = Invoice::new(products);
         invoice.calculate_taxes();
         let total = invoice.calculate_total();
-        assert!((total-434.0).abs()<0.001);
+        assert!((total - 434.0).abs() < 0.001);
         let total_products = invoice.total_products();
         let total_tips = invoice.total_tips();
         let total_taxes = invoice.total_taxes();

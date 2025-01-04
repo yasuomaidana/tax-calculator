@@ -23,7 +23,10 @@ impl Product {
     }
 }
 
-pub fn extract_by_name(products: &mut Vec<&mut Product>, product_type: &str) -> Option<Vec<Product>> {
+pub fn extract_by_name(
+    products: &mut Vec<&mut Product>,
+    product_type: &str,
+) -> Option<Vec<Product>> {
     let mut to_return = Vec::new();
     products.retain(|product| {
         if product.product == product_type {
@@ -40,7 +43,10 @@ pub fn extract_by_name(products: &mut Vec<&mut Product>, product_type: &str) -> 
     }
 }
 
-pub fn extract_by_type_mut(products: &mut Vec<&mut Product>, product_type: &str) -> Option<Vec<Product>> {
+pub fn extract_by_type_mut(
+    products: &mut Vec<&mut Product>,
+    product_type: &str,
+) -> Option<Vec<Product>> {
     let mut to_return = Vec::new();
     products.retain(|product| {
         if product.product_type == product_type {
@@ -89,7 +95,7 @@ pub fn calculate_total_from_products(products: &Vec<Product>) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     // #[test]
     // fn test_extract_by_type() {
     //     let mut products = vec![
@@ -130,13 +136,13 @@ mod tests {
     //         },
     //     ];
     //     let beverages = extract_by_type(&mut products, "Bebida");
-    //     
+    //
     //     assert_eq!(beverages.unwrap().len(), 5);
     //     assert_eq!(products.len(), 0);
     // }
-    
+
     #[test]
-    fn test_extract_by_type_mut(){
+    fn test_extract_by_type_mut() {
         let mut products = vec![
             Product {
                 date: "2021-01-01".to_owned(),
@@ -176,7 +182,7 @@ mod tests {
         ];
         let mut products = products.iter_mut().collect::<Vec<_>>();
         let beverages = extract_by_type_mut(&mut products, "Bebida");
-        
+
         assert_eq!(beverages.unwrap().len(), 4);
         assert_eq!(products.len(), 1);
     }
