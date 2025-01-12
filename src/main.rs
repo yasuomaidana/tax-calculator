@@ -25,15 +25,5 @@ fn main() {
     let mut invoice = Invoice::new(products);
     invoice.calculate_taxes();
     invoice.show_invoice(args.show_all);
-
-    println!("\n====================================");
-    println!("Products: ${:0.2}", invoice.total_products());
-    if invoice.total_tips() > 0.0 {
-        println!("Tips: ${:0.2}", invoice.total_tips());
-    }
-    println!("Taxes: ${:0.2}", invoice.total_taxes());
-    println!(
-        "---------Total: ${:0.2}---------",
-        invoice.calculate_total()
-    );
+    invoice.print_resume();
 }
