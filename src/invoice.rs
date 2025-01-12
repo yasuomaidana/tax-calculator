@@ -96,6 +96,8 @@ impl<'a> Invoice<'a> {
     fn calculate_taxes_from_products(&mut self) {
         let mut base = self.products[0].clone();
         let total = self.remove_vat_from_products();
+        base.product = "IVA".to_owned();
+        base.product_type = "Impuestos".to_owned();
         base.price = Some(total * VAT);
         self.taxes = Some(vec![base]);
     }

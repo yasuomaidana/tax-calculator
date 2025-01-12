@@ -14,6 +14,7 @@ pub fn read_file(file: &str) -> Vec<Product> {
                 .next()
                 .unwrap()
                 .replace("$", "")
+                .replace(",", "")
                 .trim()
                 .to_owned()
                 .parse::<f64>()
