@@ -132,6 +132,38 @@ impl<'a> Invoice<'a> {
                 .map(|x| x.iter().for_each(|y| y.show_all()));
         }
     }
+
+    pub fn print_resume(&self) {
+        let products_string = format!("Products: ${:0.2}", self.total_products());
+        let tips_string = if self.total_tips() > 0.0 {
+            format!("Tips: ${:0.2}", self.total_tips())
+        } else {
+            "".to_owned()
+        };
+        let taxes_string = format!("Taxes: ${:0.2}", self.total_taxes());
+        let total_string = format!("Total: ${:0.2}", self.calculate_total());
+        let totals = vec![&products_string, &tips_string, &taxes_string, &total_string];
+        let largest_string = find_largest_string(&totals).max(36);
+        let header = "=".repeat(largest_string);
+        println!("\n{}", header);
+        for x in totals {
+            if x.is_empty() {
+                continue;
+            }
+            if x.contains("Total") {
+                println!("{}", "-".repeat(largest_string));
+            }
+            let to_fill = largest_string - x.len();
+            let left_fill = to_fill / 2 - 1;
+            let right_fill = to_fill - left_fill - 2;
+            println!("|{}{}{}|", " ".repeat(left_fill), x, " ".repeat(right_fill));
+        }
+        println!("{}", header);
+    }
+}
+
+fn find_largest_string(strings: &Vec<&String>) -> usize {
+    strings.iter().fold(0, |acc, x| acc.max(x.len())) + 4
 }
 
 #[cfg(test)]
