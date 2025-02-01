@@ -198,6 +198,10 @@ mod tests {
     use crate::product::Product;
     use crate::reader::read_file;
 
+    fn round_to_two_decimals(value: f64) -> f64 {
+        (value * 100.0).round() / 100.0
+    }
+    
     #[test]
     fn test_new_invoice() {
         let mut products = vec![
@@ -315,6 +319,26 @@ mod tests {
         assert!((total_products - 703.32).abs() < 0.001);
         assert_eq!(total_tips, 0.0);
         assert!((total_taxes - 157.63).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_tips_and_taxes_calculation() {
+        let raw_invoice = "
+        viernes, 27 de diciembre de 2024	Torta	Restaurante	name	 $400.00
+        viernes, 27 de diciembre de 2024	Vino Tinto	Restaurante	name	 $253.00
+        ";
+        let mut products = read_file(raw_invoice);
+        let products = products.iter_mut().collect::<Vec<_>>();
+        let mut invoice = Invoice::new(products);
+        invoice.taxes_and_tips_from_products(0.10);
+        let total = round_to_two_decimals(invoice.calculate_total());
+        assert_eq!(total, 653.0);
+        let taxes = round_to_two_decimals(invoice.total_taxes());
+        let tips = round_to_two_decimals(invoice.total_tips());
+        let products = round_to_two_decimals(invoice.total_products());
+        assert_eq!(tips, 51.83);
+        assert_eq!(taxes, 82.92);
+        assert_eq!(products, 518.25);
     }
 
     #[test]
