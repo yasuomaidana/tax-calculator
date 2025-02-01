@@ -21,6 +21,20 @@ impl Product {
             self.price.unwrap_or(0.0)
         );
     }
+    pub fn create_product_from_product(
+        product: &Product,
+        product_name: &str,
+        product_type: &str,
+        price: Option<f64>,
+    ) -> Product {
+        Product {
+            date: product.date.clone(),
+            product: product_name.to_owned(),
+            product_type: product_type.to_owned(),
+            place: product.place.clone(),
+            price,
+        }
+    }
 }
 
 pub fn extract_by_name(
