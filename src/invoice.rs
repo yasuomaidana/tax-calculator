@@ -126,7 +126,7 @@ impl<'a> Invoice<'a> {
                 .map(|x| x.iter().for_each(|y| y.show_all()));
         } else {
             self.products.iter().for_each(|x| x.show());
-            self.tips.as_ref().map(|x| x.show());
+            self.tips.as_ref().map(|x| x.show_all());
             self.taxes
                 .as_ref()
                 .map(|x| x.iter().for_each(|y| y.show_all()));
