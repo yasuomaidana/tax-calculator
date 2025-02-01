@@ -19,12 +19,27 @@ struct Args {
     tips_percentage: Option<f64>,
 }
 
+fn clean_percentage(percentage: f64) -> f64 {
+    if percentage > 1.0 {
+        percentage / 100.0
+    } else {
+        percentage
+    }
+}
+
 fn main() {
     let args = Args::parse();
     let file = fs::read_to_string(args.file).unwrap();
     let mut products: Vec<Product> = reader::read_file(&file);
     let products = products.iter_mut().collect::<Vec<&mut Product>>();
     let mut invoice = Invoice::new(products);
+
+    if let Some(tips_percentage) = args.tips_percentage {
+        let tips_percentage = clean_percentage(tips_percentage);
+        println!("Adding tips from products: {}", tips_percentage);
+        invoice.tips_from_products(tips_percentage);
+    }
+
     invoice.calculate_taxes();
     invoice.show_invoice(args.show_all);
     invoice.print_resume();
