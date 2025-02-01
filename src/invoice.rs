@@ -93,28 +93,28 @@ impl<'a> Invoice<'a> {
         calculate_total_from_products_mut(&self.products)
     }
 
-    pub fn taxes_and_tips_from_products(&mut self, tips_percentage: f64) {
+    pub fn tips_from_products(&mut self, tips_percentage: f64) {
         let total_consumed = self.total_products();
         let total_percentages = tips_percentage + VAT;
         let original_consumed = total_consumed / (1.0 + total_percentages);
         let tips = original_consumed * tips_percentage;
-        let taxes = original_consumed * VAT;
         self.products.iter_mut().for_each(|x| {
             let price = x.price.unwrap_or(0.0);
-            x.price = Some(price / (1.0 + total_percentages));
+            let price = price / (1.0 + total_percentages) * (1.0 + VAT);
+            x.price = Some(price);
         });
+        self.taxes = Some(vec![Product::create_product_from_product(
+            &self.products[0],
+            "IVA",
+            "Impuestos",
+            Some(original_consumed * VAT),
+        )]);
         self.tips = Some(Product::create_product_from_product(
             &self.products[0],
             "Propina",
             self.products[0].product_type.as_str(),
             Some(tips),
         ));
-        self.taxes = Some(vec![Product::create_product_from_product(
-            &self.products[0],
-            "IVA",
-            "Impuestos",
-            Some(taxes),
-        )]);
     }
 
     fn calculate_taxes_from_products(&mut self) {
@@ -201,7 +201,7 @@ mod tests {
     fn round_to_two_decimals(value: f64) -> f64 {
         (value * 100.0).round() / 100.0
     }
-    
+
     #[test]
     fn test_new_invoice() {
         let mut products = vec![
@@ -330,15 +330,20 @@ mod tests {
         let mut products = read_file(raw_invoice);
         let products = products.iter_mut().collect::<Vec<_>>();
         let mut invoice = Invoice::new(products);
-        invoice.taxes_and_tips_from_products(0.10);
+        invoice.tips_from_products(0.10);
+        invoice.calculate_taxes();
+
+        let taxes = round_to_two_decimals(invoice.total_taxes());
+        assert_eq!(taxes, 82.92);
+
+        let tips = round_to_two_decimals(invoice.total_tips());
+        assert_eq!(tips, 51.83);
+
+        let products = round_to_two_decimals(invoice.total_products());
+        assert_eq!(products, 518.25);
+
         let total = round_to_two_decimals(invoice.calculate_total());
         assert_eq!(total, 653.0);
-        let taxes = round_to_two_decimals(invoice.total_taxes());
-        let tips = round_to_two_decimals(invoice.total_tips());
-        let products = round_to_two_decimals(invoice.total_products());
-        assert_eq!(tips, 51.83);
-        assert_eq!(taxes, 82.92);
-        assert_eq!(products, 518.25);
     }
 
     #[test]
