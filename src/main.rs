@@ -15,6 +15,8 @@ struct Args {
     file: PathBuf,
     #[arg(short, long, help = "Show all products", default_value = "false")]
     show_all: bool,
+    #[arg(short, long, help = "Tips percentage")]
+    tips_percentage: Option<f64>,
 }
 
 fn main() {
