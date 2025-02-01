@@ -93,13 +93,39 @@ impl<'a> Invoice<'a> {
         calculate_total_from_products_mut(&self.products)
     }
 
+    pub fn taxes_and_tips_from_products(&mut self, tips_percentage: f64) {
+        let total_consumed = self.total_products();
+        let total_percentages = tips_percentage + VAT;
+        let original_consumed = total_consumed / (1.0 + total_percentages);
+        let tips = original_consumed * tips_percentage;
+        let taxes = original_consumed * VAT;
+        self.products.iter_mut().for_each(|x| {
+            let price = x.price.unwrap_or(0.0);
+            x.price = Some(price / (1.0 + total_percentages));
+        });
+        self.tips = Some(Product::create_product_from_product(
+            &self.products[0],
+            "Propina",
+            self.products[0].product_type.as_str(),
+            Some(tips),
+        ));
+        self.taxes = Some(vec![Product::create_product_from_product(
+            &self.products[0],
+            "IVA",
+            "Impuestos",
+            Some(taxes),
+        )]);
+    }
+
     fn calculate_taxes_from_products(&mut self) {
-        let mut base = self.products[0].clone();
         let total = self.remove_vat_from_products();
-        base.product = "IVA".to_owned();
-        base.product_type = "Impuestos".to_owned();
-        base.price = Some(total * VAT);
-        self.taxes = Some(vec![base]);
+        let taxes = Product::create_product_from_product(
+            &self.products[0],
+            "IVA",
+            "Impuestos",
+            Some(total * VAT),
+        );
+        self.taxes = Some(vec![taxes]);
     }
 
     pub fn calculate_total(&self) -> f64 {
